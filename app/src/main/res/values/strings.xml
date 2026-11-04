@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Epic Seven Auto Adventure</string>
+
+    <string name="accessibility_description">
+        Dịch vụ hỗ trợ tự động chạm và vuốt màn hình
+        để điều khiển Epic Seven khi người dùng bật.
+    </string>
+
+    <string name="start_button">Bắt đầu</string>
+
+    <string name="stop_button">Dừng</string>
+
+    <string name="start_auto">Bắt đầu tự động</string>
+
+    <string name="stop_auto">Dừng tự động</string>
+
+    <string name="enable_accessibility">
+        Bật quyền Trợ năng
+    </string>
+
+    <string name="enable_overlay">
+        Bật quyền hiển thị nút nổi
+    </string>
+
+    <string name="enable_capture">
+        Cho phép nhận diện màn hình
+    </string>
+
+    <string name="status_ready">
+        Sẵn sàng
+    </string>
+
+    <string name="status_running">
+        Đang tự động vượt map
+    </string>
+
+    <string name="status_stopped">
+        Đã dừng
+    </string>
+
+    <string name="floating_service_channel">
+        Điều khiển tự động Epic Seven
+    </string>
+
+</resources>
