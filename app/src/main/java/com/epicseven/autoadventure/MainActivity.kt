@@ -2,7 +2,9 @@ package com.epicseven.autoadventure
 
 import android.app.Activity
 import android.content.Intent
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
@@ -12,6 +14,10 @@ import android.widget.TextView
 import android.widget.Toast
 
 class MainActivity : Activity() {
+
+    companion object {
+        private const val REQUEST_CAPTURE = 1001
+    }
 
     private lateinit var statusText: TextView
 
@@ -39,10 +45,7 @@ class MainActivity : Activity() {
         }
         layout.addView(statusText)
 
-        fun addButton(
-            label: String,
-            action: () -> Unit
-        ) {
+        fun addButton(label: String, action: () -> Unit) {
             val button = Button(this).apply {
                 text = label
                 setOnClickListener { action() }
@@ -68,35 +71,110 @@ class MainActivity : Activity() {
             )
         }
 
-        addButton("3. Bắt đầu") {
+        addButton("3. Cấp quyền ghi hình màn hình") {
+            requestScreenCapture()
+        }
+
+        addButton("4. Hiển thị nút nổi") {
             if (!Settings.canDrawOverlays(this)) {
                 showMessage("Hãy cấp quyền nút nổi trước")
             } else {
                 startService(
                     Intent(this, FloatingService::class.java)
                 )
-                statusText.text = "Trạng thái: Đã yêu cầu mở nút nổi"
+                statusText.text =
+                    "Trạng thái: Đã mở nút nổi"
             }
         }
 
-        addButton("4. Dừng") {
+        addButton("5. Dừng") {
+            AutoAccessibilityService.isAutoRunning = false
+
             stopService(
                 Intent(this, FloatingService::class.java)
             )
-            statusText.text = "Trạng thái: Đã dừng nút nổi"
+
+            stopService(
+                Intent(this, ScreenCaptureService::class.java)
+            )
+
+            statusText.text = "Trạng thái: Đã dừng"
         }
 
         val note = TextView(this).apply {
-            text = "Cần bật quyền Trợ năng và cho phép " +
-                "ghi hình màn hình trước khi sử dụng " +
-                "chức năng tự động."
+            text = "Hướng dẫn:\n" +
+                "1. Cấp quyền nút nổi\n" +
+                "2. Bật quyền Trợ năng\n" +
+                "3. Cho phép ghi hình màn hình\n" +
+                "4. Hiển thị nút nổi\n" +
+                "5. Mở Epic Seven để kiểm thử"
             textSize = 14f
-            gravity = Gravity.CENTER
             setPadding(0, 35, 0, 0)
         }
         layout.addView(note)
 
         setContentView(layout)
+    }
+
+    private fun requestScreenCapture() {
+        val manager = getSystemService(
+            MEDIA_PROJECTION_SERVICE
+        ) as MediaProjectionManager
+
+        val intent = manager.createScreenCaptureIntent()
+
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, REQUEST_CAPTURE)
+    }
+
+    @Deprecated("Uses legacy activity result callback")
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
+    ) {
+        super.onActivityResult(
+            requestCode,
+            resultCode,
+            data
+        )
+
+        if (requestCode != REQUEST_CAPTURE) return
+
+        if (resultCode != RESULT_OK || data == null) {
+            statusText.text =
+                "Trạng thái: Chưa cấp quyền ghi hình"
+            showMessage("Bạn đã từ chối ghi hình")
+            return
+        }
+
+        val serviceIntent = Intent(
+            this,
+            ScreenCaptureService::class.java
+        ).apply {
+            action = ScreenCaptureService.ACTION_START
+
+            putExtra(
+                ScreenCaptureService.EXTRA_RESULT_CODE,
+                resultCode
+            )
+
+            putExtra(
+                ScreenCaptureService.EXTRA_RESULT_DATA,
+                data
+            )
+        }
+
+        if (Build.VERSION.SDK_INT >= 26) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
+
+        statusText.text =
+            "Trạng thái: Đã yêu cầu bắt đầu ghi hình"
+
+        showMessage("Đã chấp thuận quyền ghi hình")
     }
 
     private fun showMessage(message: String) {
